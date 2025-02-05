@@ -15,8 +15,8 @@ By following a traditional, hands-on development approach, Eria revives the esse
 [![GitHub issues](https://img.shields.io/github/issues/ErfanRht/Eria?style=social)](https://github.com/ErfanRht/Eria/issues)  
 [![GitHub license](https://img.shields.io/github/license/ErfanRht/Eria?style=social)](https://github.com/ErfanRht/Eria/blob/master/LICENSE)
 
-<p align="center"><a href="https://github.com/ErfanRht/Eria/"><img src="./showcase/Screenshot 2025-02-05 174850.png" width="50%"/></a></p>
-<p align="center"><a href="https://github.com/ErfanRht/Eria/"><img src="./showcase/Screenshot 2025-02-05 182037.png" width="50%"/></a></p>
+<p align="center"><a href="https://github.com/ErfanRht/Eria/"><img src="./showcase/Screenshot 2025-02-05 174850.png" width="25%"/></a></p>
+<p align="center"><a href="https://github.com/ErfanRht/Eria/"><img src="./showcase/Screenshot 2025-02-05 182037.png" width="25%"/></a></p>
 
 ## 🚀 Features
 - **Built from Scratch** – No modern IDE frameworks, just pure C++ and SDL.
