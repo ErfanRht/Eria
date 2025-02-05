@@ -27,7 +27,7 @@ vector<string> lines = {""};
 vector<vector<string>> linesHistory, futureLines;
 
 vector<string> autoCompleteWords = {
-        "if", "else", "while", "switch", "case", "for", "try", "catch", "main", "int", "float", "double", "char", "void", "bool", "auto", "const", "static", "return", "namespace", "using", "include", "true", "false", "class", "struct", "template", "signed", "unsigned", "short", "long", "sizeof", "union", "enum","break", "continue","not", "or", "new"
+        "if", "endl", "else", "while", "switch", "case", "for", "try", "catch", "main", "int", "float", "double", "char", "void", "bool", "auto", "const", "static", "return", "namespace", "using", "include", "true", "false", "class", "struct", "template", "signed", "unsigned", "short", "long", "sizeof", "union", "enum","break", "continue","not", "or", "new"
 };
 vector<string> keywords = autoCompleteWords;
 
@@ -179,7 +179,7 @@ vector<string> getProjects() {
             if (fileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
                 string folderName = fileData.cFileName;
                 if (folderName != "." && folderName != ".." &&
-                    folderName != "cmake-build-debug" && folderName != ".idea") {
+                    folderName != "cmake-build-debug" && folderName != ".idea" && folderName != ".git" && folderName != "Docs") {
                     folders.push_back(folderName);
                 }
             }
@@ -303,23 +303,6 @@ vector<pair<string, SDL_Color>> highlightLine(const string& line) {
             "int", "float", "double", "char", "bool", "auto", "const", "static", "short", "long", "unsigned", "signed"
     };
 
-    // The regex is written on one line. Its alternatives are:
-    // 1. ([\(\)\{\}\[\]\+\-])                        - Operators/brackets
-    // 2. (                                           - String literals (double-,
-    //        "([^"\\]|\\.)*"                         -   single- or angle bracket–quoted)
-    //      | '([^'\\]|\\.)*'
-    //      | <([^>\\]|\\.)*>
-    //     )
-    // 3. \b(auto|bool|break|case|catch|char|class|const|continue|default|delete|do|double|else|enum|false|float|for|if|int|vector|string|long|namespace|new|nullptr|private|protected|public|return|short|signed|sizeof|static|struct|switch|template|true|try|typedef|union|unsigned|using|void|while)\b
-    //                                                   - Keywords (group 6 now)
-    // 4. \b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()           - Function names (group 7)
-    // 5. \b(\d+(\.\d+)?)\b                             - Numbers (group 8; fractional part in group 9)
-    // 6. (//.*$)                                      - Single-line comments (group 10)
-    // 7. (/\*.*)                                      - Start of multi-line comment (group 11)
-    // 8. (\*/)                                        - End of multi-line comment (group 12)
-    // 9. (#\b(include|define|ifdef|else|endif)\b)       - Preprocessor directives (group 13; inner directive in group 14)
-    // 10. \b(?!(?:auto|bool|break|case|catch|char|class|const|continue|default|delete|do|double|else|enum|false|float|for|if|int|vector|string|long|namespace|new|nullptr|private|protected|public|return|short|signed|sizeof|static|struct|switch|template|true|try|typedef|union|unsigned|using|void|while)\b)([a-zA-Z_][a-zA-Z0-9_]*)\b
-    //                                                   - Variables (group 15), which are identifiers not matching keywords.
     regex combinedRegex(
             R"(([\(\)\{\}\[\]\+\-])|(\"([^\"\\]|\\.)*\"|'([^'\\]|\\.)*'|<([^>\\]|\\.)*>)|\b(auto|bool|break|case|catch|char|class|const|continue|default|delete|do|double|else|enum|std::|false|float|for|if|int|vector|string|long|namespace|new|nullptr|private|protected|public|return|short|signed|sizeof|static|struct|switch|template|true|try|typedef|union|unsigned|using|void|while)\b|\b([a-zA-Z_][a-zA-Z0-9_]*)\s*(?=\()|\b(\d+(\.\d+)?)\b|(//.*$)|(/\*.*)|(\*/)|(#\b(include|define|ifdef|else|endif)\b)|\b(?!(?:auto|bool|break|case|catch|char|class|const|continue|default|delete|do|double|else|enum|false|float|for|if|int|vector|string|long|namespace|new|nullptr|private|protected|public|return|short|signed|sizeof|static|struct|switch|template|true|try|typedef|union|unsigned|using|void|while)\b)([a-zA-Z_][a-zA-Z0-9_]*)\b)"
     );
@@ -340,18 +323,6 @@ vector<pair<string, SDL_Color>> highlightLine(const string& line) {
         }
 
         SDL_Color matchColor = darkMode ? SDL_Color{255, 255, 255, 255} : SDL_Color{0, 0, 0, 255};
-
-        // Updated group index mapping:
-        // 1: Operators/brackets
-        // 2: String literals (the whole literal; inner groups ignored)
-        // 6: Keywords
-        // 7: Function names
-        // 8: Numbers (group 8; fractional part in group 9)
-        // 10: Single-line comments
-        // 11: Start of multi-line comment (/*...)
-        // 12: End of multi-line comment (...*/)
-        // 13: Preprocessor directives (#include/#define) (group 13; inner directive in group 14)
-        // 15: Variable names (only if not a keyword)
 
         if (match[11].matched) { // Start of multi-line comment (/*)
             inMultiLineComment = true;
@@ -408,7 +379,6 @@ void checkSwitchOpportunities(const vector<string>& lines) {
     switchCases.clear();
     switchErrors.clear();
 
-    // More flexible regex patterns
     regex ifRegex(R"(\bif\s*\(\s*([a-zA-Z_]\w*)\s*==\s*([^)]+)\s*\)\s*\{?)");
     regex elseIfRegex(R"(\belse\s+if\s*\(\s*([a-zA-Z_]\w*)\s*==\s*([^)]+)\s*\)\s*\{?)");
     regex elseRegex(R"(\belse\b\s*\{?)");
@@ -426,7 +396,7 @@ void checkSwitchOpportunities(const vector<string>& lines) {
         string line = lines[i];
         smatch match;
 
-        // Detect start of chain
+        // Start of chain
         if (regex_search(line, match, ifRegex) && !inChain) {
             chainStart = i;
             targetVar = match[1];
@@ -434,7 +404,7 @@ void checkSwitchOpportunities(const vector<string>& lines) {
             inChain = true;
             caseBlocks.emplace_back();  // Start first case block
         }
-            // Detect subsequent else-ifs
+            // The rest of else-ifs
         else if (inChain && regex_search(line, match, elseIfRegex)) {
             if (match[1] != targetVar) {
                 inChain = false;  // Variable mismatch
@@ -443,7 +413,7 @@ void checkSwitchOpportunities(const vector<string>& lines) {
             caseValues.push_back(match[2]);
             caseBlocks.emplace_back();
         }
-            // Detect final else
+        // Final else
         else if (inChain && regex_search(line, elseRegex)) {
             caseBlocks.emplace_back();  // Start else block
         }
@@ -454,14 +424,12 @@ void checkSwitchOpportunities(const vector<string>& lines) {
             braceDepth += count(line.begin(), line.end(), '{');
             braceDepth -= count(line.begin(), line.end(), '}');
 
-            // Add line to current block
             if (!caseBlocks.empty()) {
                 caseBlocks.back().push_back(line);
             }
 
-            // End of chain detection
+            // End of chain
             if (braceDepth == 0 && i > chainStart) {
-                // Validate minimum chain length
                 if (caseValues.size() >= 2) {
                     SwitchCase sc;
                     sc.startLine = chainStart;
@@ -471,7 +439,6 @@ void checkSwitchOpportunities(const vector<string>& lines) {
                     sc.elseLines = elseBlock;
                     switchCases.push_back(sc);
 
-                    // Create error message
                     string msg = "Replace if-else chain with switch (" +
                                  targetVar + ") starting at line " +
                                  to_string(chainStart - minCurrentLine + 1);
@@ -496,10 +463,9 @@ void renderTopBar(SDL_Renderer* renderer, TTF_Font* font, vector<string> &lines)
     SDL_Texture* darkModeIconTexture = IMG_LoadTexture(renderer, R"(C:\Users\Erfan\Dev\Cpp\IDE-Project\darkMode.png)");
     SDL_Texture* runIconTexture = IMG_LoadTexture(renderer, R"(C:\Users\Erfan\Dev\Cpp\IDE-Project\run.png)");
 
-    SDL_SetRenderDrawColor(renderer, 0, 80, 160, 255); // Lighter dark blue
+    SDL_SetRenderDrawColor(renderer, 0, 80, 160, 255); 
     SDL_Rect topBarRect = {0, 0, SCREEN_WIDTH, 50};
     SDL_RenderFillRect(renderer, &topBarRect);
-    // Render title text
     SDL_Color textColor = {255, 255, 255, 255};
     string title = (currentProjectName==""?"":currentProjectName+'/')+(currentFileName==""?"Eria IDE-Project 2025":currentFileName);
     SDL_Surface* textSurface = TTF_RenderText_Solid(font, title.c_str(), textColor);
@@ -600,17 +566,16 @@ void renderTopBar(SDL_Renderer* renderer, TTF_Font* font, vector<string> &lines)
                                                initializeNewLine(iNewLine, newLines);
                                                newLines[iNewLine] += ("switch (" + sc.variable + ") {");
                                                size_t j = sc.startLine + 1;
-                                               // Add cases
                                                for (size_t i = 0; i < sc.constants.size(); ++i) {
                                                    iNewLine++;
                                                    initializeNewLine(iNewLine, newLines);
                                                    newLines[iNewLine] += ("    case " + sc.constants[i] + ":");
-
+                                                   
                                                    // Extract the code block from the if-else chain
                                                    for (j ; j < sc.endLine; ++j) {
-                                                       if (lines[j].find("}") != string::npos) {j++; break; } // Stop at closing brace
+                                                       if (lines[j].find("}") != string::npos) {j++; break; } 
                                                        iNewLine++;
-                                                       newLines.push_back("        " + lines[j]); // Preserve indentation
+                                                       newLines.push_back("        " + lines[j]); 
                                                    }
 
                                                    iNewLine++;
@@ -618,20 +583,18 @@ void renderTopBar(SDL_Renderer* renderer, TTF_Font* font, vector<string> &lines)
                                                    newLines[iNewLine] += ("        break;");
                                                }
 
-                                               // Add the default case
                                                iNewLine++;
                                                initializeNewLine(iNewLine, newLines);
                                                newLines[iNewLine] += ("    default:");
                                                for (j; j < sc.endLine; ++j) {
-                                                   if (lines[j].find("}") != string::npos) break; // Stop at closing brace
+                                                   if (lines[j].find("}") != string::npos) break; 
                                                    iNewLine++;
-                                                   newLines.push_back("        " + lines[j]); // Preserve indentation
+                                                   newLines.push_back("        " + lines[j]);
                                                }
                                                iNewLine++;
                                                initializeNewLine(iNewLine, newLines);
                                                newLines[iNewLine] += ("}");
 
-                                               // Replace the if-else block with the switch statement
                                                lines.erase(lines.begin() + sc.startLine, lines.begin() + sc.endLine + 1);
                                                lines.insert(lines.begin() + sc.startLine, newLines.begin(), newLines.end());
                                            }
@@ -666,11 +629,9 @@ void runCode(SDL_Renderer* renderer, TTF_Font* font){
         saveToFile(lines, renderer, font);
     }
 
-    // Build paths
     string sourcePath = path + currentProjectName + "/" + currentFileName;
     string outputPath = path + currentProjectName + "/output.exe";
 
-    // Compile
     if (compile(sourcePath, outputPath)) {
         run_in_another_window(outputPath);
     } else {
@@ -683,7 +644,6 @@ bool handleDarkModeIconClicks(SDL_Event* event) {
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
 
-        // Check if the mouse click is inside the bounds of the icon
         if (mouseX >= SCREEN_WIDTH - 50 && mouseX <= SCREEN_WIDTH - 10 &&
             mouseY >= 0 && mouseY <= 50) {
             darkMode = !darkMode;
@@ -695,7 +655,7 @@ bool handleRunIconClicks(SDL_Event* event, SDL_Renderer* renderer, TTF_Font* fon
     if (event->type == SDL_MOUSEBUTTONDOWN) {
         int mouseX, mouseY;
         SDL_GetMouseState(&mouseX, &mouseY);
-        // Check if the mouse click is inside the bounds of the icon
+
         if (mouseX >= SCREEN_WIDTH - 50 - 355 && mouseX <= SCREEN_WIDTH - 355 &&
             mouseY >= 0 && mouseY <= 50) {
             runCode(renderer, font);
@@ -717,7 +677,7 @@ void checkLibrariesInclude(const vector<string>& lines) {
 }
 void checkLibrariesUsage(const vector<string>& lines) {
     usedLibraries.clear();
-    regex wordRegex(R"(\b\w+\b)"); // Matches words (sequences of letters, digits, or underscores)
+    regex wordRegex(R"(\b\w+\b)"); 
 
     for (const string& line : lines) {
         smatch match;
@@ -755,13 +715,12 @@ void checkUnclosedCharacters(const vector<string>& lines, vector<string>& errors
                 continue;
             }
 
-            // Check if inside a multi-line comment
             if (state.inMultiLineComment) {
                 if (c == '*' && i + 1 < line.size() && line[i + 1] == '/') {
                     state.inMultiLineComment = false;
                     i++; // Skip the '/' character
                 }
-                continue; // Skip processing other characters inside comment
+                continue; 
             }
 
             if (c == '\\') {
@@ -780,7 +739,6 @@ void checkUnclosedCharacters(const vector<string>& lines, vector<string>& errors
 
             if (state.inQuote) continue;
 
-            // Check for start of multi-line comment
             if (c == '/' && i + 1 < line.size() && line[i + 1] == '*') {
                 state.inMultiLineComment = true;
                 state.commentStartLine = lineNum + 1;
@@ -788,7 +746,6 @@ void checkUnclosedCharacters(const vector<string>& lines, vector<string>& errors
                 continue;
             }
 
-            // Handle brackets
             if (c == '(' || c == '{' || c == '[') {
                 state.bracketStack.push({c, lineNum + 1});
             }
@@ -827,12 +784,10 @@ void checkUnclosedCharacters(const vector<string>& lines, vector<string>& errors
                          to_string(openLine - 3));
     }
 
-    // Check for unclosed quote
     if (state.inQuote) {
         errors.push_back("Unclosed '\"' started at line " + to_string(state.quoteStartLine - 3));
     }
 
-    // Check for unclosed multi-line comment
     if (state.inMultiLineComment) {
         errors.push_back("Unclosed comment started at line " + to_string(state.commentStartLine - 3));
     }
@@ -850,13 +805,11 @@ void checkMissingSemicolons(const vector<string>& lines) {
         bool isPreprocessor = false;
         bool isBracketOnly = false;
 
-        // Skip empty lines
         if(line.empty()) continue;
 
         for(size_t i = 0; i < line.size(); i++) {
             char c = line[i];
 
-            // Handle escape sequences in strings
             if(escape) {
                 escape = false;
                 continue;
@@ -866,14 +819,12 @@ void checkMissingSemicolons(const vector<string>& lines) {
                 continue;
             }
 
-            // Handle strings
             if(c == '"' && !inMultiLineComment) {
                 inString = !inString;
                 continue;
             }
             if(inString) continue;
 
-            // Handle comments
             if(c == '/' && i+1 < line.size()) {
                 if(line[i+1] == '/') break; // Single-line comment
                 if(line[i+1] == '*') inMultiLineComment = true;
@@ -885,13 +836,11 @@ void checkMissingSemicolons(const vector<string>& lines) {
             }
             if(inMultiLineComment) continue;
 
-            // Check for preprocessor directives
             if(c == '#') {
                 isPreprocessor = true;
                 break;
             }
 
-            // Check for meaningful code
             if(!isspace(c)) hasCode = true;
             if(c == ';') hasSemicolon = true;
             if(c == '{' || c == '}') isBracketOnly = true;
@@ -900,7 +849,6 @@ void checkMissingSemicolons(const vector<string>& lines) {
         // Skip lines that shouldn't have semicolons
         if(isPreprocessor || isBracketOnly || !hasCode) continue;
 
-        // Check for missing semicolon
         if(!hasSemicolon) {
             semicolonErrors.push_back("Missing semicolon at line " +
                                       to_string(lineNum + 1 - minCurrentLine));
@@ -932,12 +880,10 @@ void checkTypos(const vector<string>& lines, vector<string>& typoErrors) {
             string word = match.str();
             searchStart = match.suffix().first;
 
-            // Skip valid keywords and library functions
             if (find(keywords.begin(), keywords.end(), word) != keywords.end()) continue;
 
-            // Find best match
             string bestMatch;
-            float bestScore = 0.0f;
+            float bestScore = 0.0;
 
             for (const string& keyword : keywords) {
                 int m = word.size(), n = keyword.size();
@@ -953,7 +899,7 @@ void checkTypos(const vector<string>& lines, vector<string>& typoErrors) {
 
                 float similarity = (2.0f * current[n]) / (word.length() + keyword.length());
 
-                if (similarity > bestScore && similarity >= 0.7f) {
+                if (similarity > bestScore && similarity >= 0.85) {
                     bestScore = similarity;
                     bestMatch = keyword;
                 }
@@ -967,12 +913,12 @@ void checkTypos(const vector<string>& lines, vector<string>& typoErrors) {
     }
 }
 
-int getTextWidthUpTo(int position, TTF_Font* font, vector<string> &lines) {
+int textWidthBeforeCharacter(int position, TTF_Font* font, vector<string> &lines) {
     int width = 0;
     if (position > 0) {
         TTF_SizeText(font, lines[currentLine].substr(0, position).c_str(), &width, nullptr);
     }
-    return width + 10; // Add the padding for the left margin
+    return width + 10;
 }
 
 void undo(){
@@ -1044,7 +990,7 @@ void initializeProjectsButtons(SDL_Renderer* renderer, TTF_Font* font){
             projectsButtons.push_back({
                                               {5, c+g, 200, 50},
                                               20,
-                                              SDL_Color{0, 80, 160, 255}, // Lighter dark blue,
+                                              SDL_Color{0, 80, 160, 255},
                                               {255, 255, 255, 255},
                                               project,[&renderer, &font, project]() {}}
             );
@@ -1128,7 +1074,7 @@ int main(int argc, char* argv[]) {
     initializeEditor();
     linesHistory.push_back(lines);
     int scrollOffset = 0; // Keeps track of scrolling
-    const int LINE_HEIGHT = TTF_FontHeight(font); // Height of each line
+    const int LINE_HEIGHT = TTF_FontHeight(font);
 
     // Timer for cursor blinking
     Uint32 lastCursorToggle = SDL_GetTicks();
@@ -1138,8 +1084,8 @@ int main(int argc, char* argv[]) {
     buttons.push_back({
                               {SCREEN_WIDTH-175, 7, 100, 36},
                               15,
-                              {0, 122, 255, 255},  // Modern blue background
-                              {255, 255, 255, 255}, // White text
+                              {0, 122, 255, 255},
+                              {255, 255, 255, 255},
                               "Save",
                               [&renderer, &font]() { saveToFile(lines, renderer, font); }
                       });
@@ -1147,8 +1093,8 @@ int main(int argc, char* argv[]) {
     buttons.push_back({
                               {SCREEN_WIDTH-325, 7, 125, 36},
                               15,
-                              {0, 122, 255, 255},  // Modern blue background
-                              {255, 255, 255, 255}, // White text
+                              {0, 122, 255, 255},
+                              {255, 255, 255, 255},
                               "Save As",
                               [&renderer, &font]() { saveAsToFile(lines, renderer, font); }
                       });
@@ -1167,7 +1113,7 @@ int main(int argc, char* argv[]) {
     menuBarButtons.push_back(
             {{10, 10+50*1, 186, 36},
              15,
-             {0, 122, 255, 255},  // Modern blue background
+             {0, 122, 255, 255},
              {255, 255, 255, 255},
              "New Project",
              [&renderer, &font]() {
@@ -1184,7 +1130,7 @@ int main(int argc, char* argv[]) {
     menuBarButtons.push_back(
             {{10, 10+50*2, 186, 36},
              15,
-             {0, 122, 255, 255},  // Modern blue background
+             {0, 122, 255, 255},
              {255, 255, 255, 255},
              "Save Project",
              [&renderer, &font]() {
@@ -1193,16 +1139,16 @@ int main(int argc, char* argv[]) {
     menuBarButtons.push_back(
             {{10, 10+50*3, 186, 36},
              15,
-             {0, 122, 255, 255},  // Modern blue background
+             {0, 122, 255, 255},
              {255, 255, 255, 255},
              "Debug&Compile",
-             [&renderer, &font]() {// Capture everything by reference
+             [&renderer, &font]() {
                  runCode(renderer, font);
              }});
     menuBarButtons.push_back(
             {{10, 10+50*4, 186, 36},
              15,
-             {0, 122, 255, 255},  // Modern blue background
+             {0, 122, 255, 255},
              {255, 255, 255, 255},
              "Edit",
              []() {
@@ -1229,7 +1175,7 @@ int main(int argc, char* argv[]) {
     menuBarButtons.push_back(
             {{10, 10+50*5, 186, 36},
              15,
-             {0, 122, 255, 255},  // Modern blue background
+             {0, 122, 255, 255},
              {255, 255, 255, 255},
              "Dark/Light",
              []() {
@@ -1238,7 +1184,7 @@ int main(int argc, char* argv[]) {
     menuBarButtons.push_back(
             {{10, 10+50*6, 186, 36},
              15,
-             {0, 122, 255, 255},  // Modern blue background
+             {0, 122, 255, 255},
              {255, 255, 255, 255},
              "Exit",
              [&renderer, &font, &window]() {
@@ -1256,7 +1202,6 @@ int main(int argc, char* argv[]) {
     initializeProjectsButtons(renderer, font);
     renderTopBar(renderer, font, lines);
 
-    // Pressed states
     bool ctrlPressed = false, shiftPressed = false;
 
     // Selection states
@@ -1330,17 +1275,14 @@ int main(int argc, char* argv[]) {
             }else if (e.type == SDL_KEYDOWN) {
                 SDL_Keycode key = e.key.keysym.sym;
 
-                    // Track Control and Shift key states
                 if (e.key.keysym.sym == SDLK_LCTRL || e.key.keysym.sym == SDLK_RCTRL) {
                     ctrlPressed = true;
                 } else if (e.key.keysym.sym == SDLK_LSHIFT || e.key.keysym.sym == SDLK_RSHIFT) {
                     shiftPressed = true;
                 } else if (e.key.keysym.sym == SDLK_s) {
-                    // Check for Control + S
                     if (ctrlPressed && !shiftPressed) {
                         saveToFile(lines, renderer, font);
                     }
-                    // Check for Control + Shift + S
                     if (ctrlPressed && shiftPressed) {
                         if (ctrlPressed && shiftPressed) {
                             saveAsToFile(lines, renderer, font);
@@ -1390,13 +1332,10 @@ int main(int argc, char* argv[]) {
                             }
                         }else {
                             string selectedText;
-                            // Copy text from the start line
                             selectedText += lines[selectionStartLine].substr(selectionStart);
-                            // Copy full lines in between
                             for (int i = selectionStartLine + 1; i < selectionEndLine; ++i) {
                                 selectedText += "\n" + lines[i];
                             }
-                            // Copy text from the end line
                             selectedText += "\n" + lines[selectionEndLine].substr(0, selectionEnd);
 
                             if (SDL_SetClipboardText(selectedText.c_str()) == 0) {
@@ -1427,26 +1366,22 @@ int main(int argc, char* argv[]) {
                             }
                         } else {
                             string selectedText;
-                            // Copy text from the start line
                             selectedText += lines[selectionStartLine].substr(selectionStart);
-                            // Copy full lines in between
                             for (int i = selectionStartLine + 1; i < selectionEndLine; ++i) {
                                 selectedText += "\n" + lines[i];
                             }
-                            // Copy text from the end line
                             selectedText += "\n" + lines[selectionEndLine].substr(minCursorPos, selectionEnd);
 
                             if (SDL_SetClipboardText(selectedText.c_str()) == 0) {
                                 printf("Text copied to clipboard successfully!");
 
-                                // Erase selected text from lines
                                 lines[selectionStartLine].erase(selectionStart, lines[selectionStartLine].length() - selectionStart);
                                 for (int i = selectionStartLine + 1; i < selectionEndLine; ++i) {
-                                    lines[i].clear(); // Clear the entire line
+                                    lines[i].clear();
                                 }
                                 lines[selectionEndLine].erase(minCursorPos, selectionEnd);
 
-                                cursorPos = selectionStartLine; // Or update as needed
+                                cursorPos = selectionStartLine;
                             } else {
                                 printf("Failed to copy text to clipboard: %s\n", SDL_GetError());
                             }
@@ -1475,7 +1410,6 @@ int main(int argc, char* argv[]) {
                     ensureLastLineVisible(currentLine, scrollOffset, SCREEN_HEIGHT, LINE_HEIGHT, lines.size());
                 }
                 else if (e.key.keysym.sym == SDLK_BACKSPACE) {
-                    // Ensure cursorPos is within the valid range
                     if (cursorPos > minCursorPos && cursorPos <= lines[currentLine].size()) {
                         // Remove character before cursor
                         lines[currentLine].erase(cursorPos - 1, 1);
@@ -1487,7 +1421,6 @@ int main(int argc, char* argv[]) {
                         lines.erase(lines.begin() + currentLine);
                         currentLine--;
                     }
-                    // Ensure there's always at least one line
                     if (lines.size()<minCurrentLine) {
                         for(int i=0; i<minCurrentLine; i++){
                             lines.push_back("");
@@ -1514,30 +1447,26 @@ int main(int argc, char* argv[]) {
                 else if (e.key.keysym.sym == SDLK_TAB) {
                     string currentLineText = lines[currentLine];
                     int startPos = cursorPos - 1;
-                    // Find the start of the current word
                     while (startPos >= 0 && !isspace(currentLineText[startPos])) {
                         startPos--;
                     }
-                    startPos++; // Adjust to the start of the word
+                    startPos++;
                     string partial = currentLineText.substr(startPos, cursorPos - startPos);
 
                     vector<string> candidates;
                     for (const auto& kw : autoCompleteWords) {
-                        if (!partial.empty() && kw.find(partial) == 0) { // Check if partial is a prefix
-                            if (partial.length() >= (kw.length() / 2)) { // Check if more than half typed
+                        if (!partial.empty() && kw.find(partial) == 0) {
+                            if (partial.length() >= (kw.length() / 2)) {
                                 candidates.push_back(kw);
                             }
                         }
                     }
                     if (!candidates.empty()) {
-                        // Find the shortest candidate to autocomplete
                         string completion = *min_element(candidates.begin(), candidates.end(),[](const string& a, const string& b) { return a.length() < b.length(); });
-                        // Replace the partial word with the completion
                         lines[currentLine].erase(startPos, partial.length());
                         lines[currentLine].insert(startPos, completion);
                         cursorPos = startPos + completion.length();
                     } else {
-                        // Default to inserting 4 spaces if no completion
                         lines[currentLine].insert(cursorPos, "    ");
                         cursorPos += 4;
                     }
@@ -1567,7 +1496,6 @@ int main(int argc, char* argv[]) {
                     }
                     else if (e.key.keysym.sym == SDLK_RIGHT) {
                         if (shiftPressed) {
-                            // Extend selection to the right
                             if (selectionStart == -1) {
                                 selectionStart = cursorPos;
                                 selectionStartLine = currentLine;
@@ -1603,7 +1531,6 @@ int main(int argc, char* argv[]) {
                     }
                     else if (e.key.keysym.sym == SDLK_DOWN) {
                         if (shiftPressed) {
-                            // Extend selection downwards
                             if (selectionStart == -1) {
                                 selectionStart = cursorPos;
                                 selectionStartLine = currentLine;
@@ -1615,7 +1542,6 @@ int main(int argc, char* argv[]) {
                             selectionEnd = cursorPos;
                             selectionEndLine = currentLine;
                         } else {
-                            // Regular cursor movement
                             if (currentLine < lines.size() - 1) {
                                 currentLine++;
                                 cursorPos = min(cursorPos, (int)lines[currentLine].size());
@@ -1624,7 +1550,6 @@ int main(int argc, char* argv[]) {
                         }
                     }}}
             else if (e.type == SDL_KEYUP) {
-                // Reset key states when keys are released
                 if (e.key.keysym.sym == SDLK_LCTRL || e.key.keysym.sym == SDLK_RCTRL) {
                     ctrlPressed = false;
                 } else if (e.key.keysym.sym == SDLK_LSHIFT || e.key.keysym.sym == SDLK_RSHIFT) {
@@ -1672,7 +1597,6 @@ int main(int argc, char* argv[]) {
                     lines[i] = " "; // Show cursor on the current line
                 }
 
-                // Get highlighted segments for the line
                 auto highlightedSegments = highlightLine(lines[i]);
 
                 int x = 10; // Starting X position
@@ -1698,11 +1622,11 @@ int main(int argc, char* argv[]) {
                     if (cursorPos > 0) {
                         TTF_SizeText(font, lines[i].substr(0, cursorPos).c_str(), &cursorX, nullptr);
                     }
-                    cursorX += 10; // Add padding for the left margin
+                    cursorX += 10;
                     if (darkMode) {
-                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // White cursor in dark mode
+                        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
                     } else {
-                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Black cursor in light mode
+                        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
                     }
                     SDL_RenderDrawLine(renderer, cursorX, y, cursorX, y + LINE_HEIGHT);
                 }
@@ -1726,30 +1650,30 @@ int main(int argc, char* argv[]) {
         int linesLength = abs(selectionStartLine - selectionEndLine);
         if(selectionStartLine == selectionEndLine){
             selectedHighlight.push_back({
-                                                getTextWidthUpTo(selectionStart, font, lines),
+                                                textWidthBeforeCharacter(selectionStart, font, lines),
                                                 50 + LINE_HEIGHT * (selectionStartLine - minCurrentLine + 1) - 2,
-                                                getTextWidthUpTo(selectionEnd, font, lines) - getTextWidthUpTo(selectionStart, font, lines),
+                                                textWidthBeforeCharacter(selectionEnd, font, lines) - textWidthBeforeCharacter(selectionStart, font, lines),
                                                 LINE_HEIGHT + 2
                                         });
         }else if(selectionStartLine < selectionEndLine){
             for(int i=0; i<=linesLength; i++){
                 if(i==0){
                     selectedHighlight.push_back({
-                                                        getTextWidthUpTo(selectionStart, font, lines),
+                                                        textWidthBeforeCharacter(selectionStart, font, lines),
                                                         50 + LINE_HEIGHT * (selectionStartLine - minCurrentLine + 1) - 2,
                                                         SCREEN_WIDTH,
                                                         LINE_HEIGHT + 2
                                                 });
                 }else if(i==linesLength){
                     selectedHighlight.push_back({
-                                                        getTextWidthUpTo(minCursorPos, font, lines),
+                                                        textWidthBeforeCharacter(minCursorPos, font, lines),
                                                         50 + LINE_HEIGHT * (selectionEndLine - minCurrentLine + 1) - 2,
-                                                        getTextWidthUpTo(selectionEnd- minCursorPos-1, font, lines),
+                                                        textWidthBeforeCharacter(selectionEnd- minCursorPos-1, font, lines),
                                                         LINE_HEIGHT + 2
                                                 });
                 }else{
                     selectedHighlight.push_back({
-                                                        getTextWidthUpTo(minCursorPos, font, lines),
+                                                        textWidthBeforeCharacter(minCursorPos, font, lines),
                                                         50 + LINE_HEIGHT * (selectionStartLine - minCurrentLine + i + 1) - 2,
                                                         SCREEN_WIDTH,
                                                         LINE_HEIGHT + 2
@@ -1760,21 +1684,21 @@ int main(int argc, char* argv[]) {
             for(int i=0; i<=linesLength; i++){
                 if(i==0){
                     selectedHighlight.push_back({
-                                                        getTextWidthUpTo(selectionEnd, font, lines),
+                                                        textWidthBeforeCharacter(selectionEnd, font, lines),
                                                         50 + LINE_HEIGHT * (selectionEndLine - minCurrentLine + 1) - 2,
                                                         SCREEN_WIDTH,
                                                         LINE_HEIGHT + 2
                                                 });
                 }else if(i==linesLength){
                     selectedHighlight.push_back({
-                                                        getTextWidthUpTo(minCursorPos, font, lines),
+                                                        textWidthBeforeCharacter(minCursorPos, font, lines),
                                                         50 + LINE_HEIGHT * (selectionStartLine - minCurrentLine + 1) - 2,
-                                                        getTextWidthUpTo(selectionStart-minCursorPos, font, lines),
+                                                        textWidthBeforeCharacter(selectionStart-minCursorPos, font, lines),
                                                         LINE_HEIGHT + 2
                                                 });
                 }else{
                     selectedHighlight.push_back({
-                                                        getTextWidthUpTo(minCursorPos, font, lines),
+                                                        textWidthBeforeCharacter(minCursorPos, font, lines),
                                                         50 + LINE_HEIGHT * (selectionEndLine - minCurrentLine + i + 1) - 2,
                                                         SCREEN_WIDTH,
                                                         LINE_HEIGHT + 2
