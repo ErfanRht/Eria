@@ -16,8 +16,8 @@ By following a traditional, hands-on development approach, Eria revives the esse
 [![GitHub license](https://img.shields.io/github/license/ErfanRht/Eria?style=social)](https://github.com/ErfanRht/Eria/blob/master/LICENSE)
 
 <div align="center" style="width:100%;display:flex;justify-content:space-between;">
-<img width="50%" src="https://raw.githubusercontent.com/ErfanRht/Eria/refs/heads/main/showcase/Screenshot%202025-02-05%20174850.png" align="center" alt="screenshot" />
-<img width="50%" src="https://raw.githubusercontent.com/ErfanRht/Eria/refs/heads/main/showcase/Screenshot%202025-02-05%20182037.png" align="center" alt="screenshot" />
+<img width="48%" src="https://raw.githubusercontent.com/ErfanRht/Eria/refs/heads/main/showcase/Screenshot%202025-02-05%20174850.png" align="center" alt="screenshot" />
+<img width="48%" src="https://raw.githubusercontent.com/ErfanRht/Eria/refs/heads/main/showcase/Screenshot%202025-02-05%20182037.png" align="center" alt="screenshot" />
 </div>
 
 ## 🚀 Features
