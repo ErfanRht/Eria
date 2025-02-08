@@ -8,7 +8,6 @@ Eria is not just another IDE—it is a testament to old-school software craftsma
 By following a traditional, hands-on development approach, Eria revives the essence of classic software engineering, proving that even in today's automated world, raw programming skills can still build something powerful and efficient.
 </p>
 
-[![GitHub release (latest)](https://img.shields.io/github/v/release/ErfanRht/Eria)](https://github.com/ErfanRht/Eria/releases)  
 ![GitHub repo size](https://img.shields.io/github/repo-size/ErfanRht/Eria)  
 [![GitHub stars](https://img.shields.io/github/stars/ErfanRht/Eria?style=social)](https://github.com/ErfanRht/Eria/stargazers)  
 [![GitHub forks](https://img.shields.io/github/forks/ErfanRht/Eria?style=social)](https://github.com/ErfanRht/Eria/network/members)  
